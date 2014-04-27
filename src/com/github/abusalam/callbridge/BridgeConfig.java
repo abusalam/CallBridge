@@ -11,6 +11,7 @@ import com.github.abusalam.callbridge.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.DhcpInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -162,8 +163,13 @@ public class BridgeConfig extends Activity {
     		setContentView(R.layout.activity_bridge_config);
     		TextView tv = (TextView)findViewById(R.id.fullscreen_content);
     		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+    		DhcpInfo dhcp = wifiManager.getDhcpInfo();
     		int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+    		if(ipAddress==0){
+    			ipAddress = dhcp.serverAddress;
+    		}
     		final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+    		
     		tv.setText("http://"+formatedIpAddress+":8080/?cellNo=[PhoneNo]");
             return false;
         }
