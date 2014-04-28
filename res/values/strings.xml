@@ -4,5 +4,6 @@
     <string name="app_name">CallBridge</string>
     <string name="dummy_button">Show Configuration</string>
     <string name="dummy_content">Bridge Configuration</string>
+    <string name="msg_no_network">Network Connection Not Available!</string>
 
 </resources>

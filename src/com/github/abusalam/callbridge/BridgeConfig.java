@@ -1,19 +1,22 @@
 package com.github.abusalam.callbridge;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+import java.net.SocketException;
 import java.io.IOException;
 import java.util.Map;
 
-import com.github.abusalam.callbridge.NanoHTTPD.IHTTPSession;
-import com.github.abusalam.callbridge.NanoHTTPD.Method;
-import com.github.abusalam.callbridge.NanoHTTPD.Response;
 import com.github.abusalam.callbridge.util.SystemUiHider;
+
+import org.apache.http.conn.util.InetAddressUtils;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.net.DhcpInfo;
+//import android.net.DhcpInfo;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
+//import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -162,15 +165,12 @@ public class BridgeConfig extends Activity {
             }
     		setContentView(R.layout.activity_bridge_config);
     		TextView tv = (TextView)findViewById(R.id.fullscreen_content);
-    		WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-    		DhcpInfo dhcp = wifiManager.getDhcpInfo();
-    		int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-    		if(ipAddress==0){
-    			ipAddress = dhcp.serverAddress;
+    		String ipAddress=getLocalIpAddress();
+    		if(ipAddress==null){
+    			tv.setText(R.string.msg_no_network);
+    		}else{
+    			tv.setText("http://"+ipAddress+":8080/?cellNo=[PhoneNo]");
     		}
-    		final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-    		
-    		tv.setText("http://"+formatedIpAddress+":8080/?cellNo=[PhoneNo]");
             return false;
         }
     };
@@ -193,6 +193,28 @@ public class BridgeConfig extends Activity {
     }
     
     /**
+     * Obtain Local IP Address
+     */
+    public String getLocalIpAddress() {
+	    try {
+	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+					String ipv4;
+					if (!inetAddress.isLoopbackAddress()
+	                		&& InetAddressUtils.isIPv4Address(ipv4 = inetAddress.getHostAddress())) {
+	                    return ipv4;
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	        Log.e("WebServer", ex.toString());
+	    }
+	    return null;
+	}
+    
+    /**
      * Start WebServer and listen for call request
      */
     public class CallListener extends NanoHTTPD {
@@ -206,7 +228,7 @@ public class BridgeConfig extends Activity {
             String uri = session.getUri();
             System.out.println(method + " '" + uri + "' ");
 
-            String msg = "<html><body><h1>Call Bridge</h1>\n";
+            String msg = "<html><body>";
             Map<String, String> parms = session.getParms();
             if (parms.get("cellNo") == null)
                 msg +=

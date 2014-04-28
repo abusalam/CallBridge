@@ -1241,6 +1241,7 @@ containing a value of this type.
         public static final int app_name=0x7f0a000d;
         public static final int dummy_button=0x7f0a000e;
         public static final int dummy_content=0x7f0a000f;
+        public static final int msg_no_network=0x7f0a0010;
     }
     public static final class style {
         /** 
